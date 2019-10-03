@@ -21,7 +21,7 @@ def sayListWithNumbers(list):
     counter = 1
     resultText = ''
     for item in list:
-        resultText += '{}. @{}\n'.format(counter, item)
+        resultText += '{}. {}\n'.format(counter, item)
         counter += 1
     return resultText
 
@@ -37,6 +37,14 @@ def getPlayersList():
         if str:
             return str.split(',')
         else: return list()
+
+def getPlayerName(message):
+    if message.from_user.username:
+        return '@{}'.format(message.from_user.username)
+    elif message.from_user.first_name and message.from_user.id:
+        return '{}_{}'.format(message.from_user.first_name, message.from_user.id)
+    else:
+        return message.from_user.id
 
 def setPlayersList(players_list:list):
     with open(FILE_WITH_PLAYERS, 'w') as file:
@@ -62,8 +70,10 @@ def getHist(lines: int = 5):
 
 FILE_WITH_PLAYERS = 'playersList.txt'
 DUMP_FILE = 'dump.txt'
+TOKEN_FILE = 'token.txt'
 
-MY_TELEBOT = "887155034:AAHhLkSLS7Mkls2Go0TLSP0l2RFH4gvEVYI"
+with open(TOKEN_FILE, 'r') as token_file:
+    MY_TELEBOT = token_file.read()
 
 HELP_DESCRIPTION = """
 Коротко: описание доступных комманд есть в опциях бота.
@@ -139,23 +149,25 @@ def hist_message(message):
 
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
+    print(message)
+    print(getPlayerName(message))
     if rec.started:
         if message.text in WORDS["PLUS_COMMANDS"]:
-            if message.from_user.username not in getPlayersList():
+            if getPlayerName(message) not in getPlayersList():
                 players_array = getPlayersList()
-                players_array.append(message.from_user.username)
+                players_array.append(getPlayerName(message))
                 setPlayersList(players_array)
-                bot.reply_to(message, "Записал на следующую игру @{}.".format(message.from_user.username))
+                bot.reply_to(message, "Записал на следующую игру {}.".format(getPlayerName(message)))
             else:
-                bot.reply_to(message, "{} уже записан.".format(message.from_user.username))
+                bot.reply_to(message, "{} уже записан.".format(getPlayerName(message)))
         elif message.text in WORDS["MINUS_COMMANDS"]:
-            if message.from_user.username in getPlayersList():
+            if getPlayerName(message) in getPlayersList():
                 players_array = getPlayersList()
-                players_array.remove(message.from_user.username)
+                players_array.remove(getPlayerName(message))
                 setPlayersList(players_array)
-                bot.reply_to(message, "@{}, ну и сиди дома, кожаный ублюдок".format(message.from_user.username))
+                bot.reply_to(message, "{}, ну и сиди дома, кожаный ублюдок".format(getPlayerName(message)))
             else:
-                bot.reply_to(message, "@{} пока ещё нет в списке. Сначала запишись, написав в чат '+', 'plus' или 'плюс'".format(message.from_user.username))
+                bot.reply_to(message, "{} пока ещё нет в списке. Сначала запишись, написав в чат '+', 'plus' или 'плюс'".format(getPlayerName(message)))
     else:
         if message.text in WORDS["PLUS_COMMANDS"] + WORDS["MINUS_COMMANDS"]:
             bot.reply_to(message, "Запись на ближайшую игру ещё не началась. Для начала наберите комманду /start")
