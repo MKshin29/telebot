@@ -1,6 +1,7 @@
 import telebot
 import time
 import datetime as dt
+import re
 
 class PlayersRecording:
     started = False
@@ -52,7 +53,7 @@ def setPlayersList(players_list:list):
 
 def dumpResults():
     with open(DUMP_FILE, 'a') as dump_file:
-        result_str = '[{}] '.format(dt.date.today()) + ','.join(getPlayersList()) + '\n'
+        result_str = '[{}] '.format(dt.date.today()) + ', '.join(getPlayersList()) + '\n'
         dump_file.write(result_str)
         setPlayersList([])
 
@@ -150,8 +151,30 @@ def hist_message(message):
 @bot.message_handler(func=lambda message: True)
 def echo_all(message):
     print(message)
-    print(getPlayerName(message))
+##################################################################################################################
     if rec.started:
+        phrase = re.match(r"((\+|plus|плюс)((\s)|)(@\w+|\w+))$", message.text)
+        if phrase:
+            playerName = '{} от {}'.format(phrase.group(5), getPlayerName(message))
+            if playerName not in getPlayersList():
+                players_array = getPlayersList()
+                players_array.append(playerName)
+                setPlayersList(players_array)
+                bot.reply_to(message, "Записал на следующую игру {}.".format(playerName))
+            else:
+                bot.reply_to(message, "{} уже записан.".format(playerName))
+##################################################################################################################
+        phrase = re.match(r"((\-|minus|минус)((\s)|)(@\w+|\w+))$", message.text)
+        if phrase:
+            playerName = '{} от {}'.format(phrase.group(5), getPlayerName(message))
+            if playerName in getPlayersList():
+                players_array = getPlayersList()
+                players_array.remove(playerName)
+                setPlayersList(players_array)
+                bot.reply_to(message, "Удалил из списка {}.".format(playerName))
+            else:
+                bot.reply_to(message, "{} пока ещё нет в списке. Сначала запишись, написав в чат '+', 'plus' или 'плюс'.".format(playerName))
+        ##################################################################################################################
         if message.text in WORDS["PLUS_COMMANDS"]:
             if getPlayerName(message) not in getPlayersList():
                 players_array = getPlayersList()
@@ -160,7 +183,8 @@ def echo_all(message):
                 bot.reply_to(message, "Записал на следующую игру {}.".format(getPlayerName(message)))
             else:
                 bot.reply_to(message, "{} уже записан.".format(getPlayerName(message)))
-        elif message.text in WORDS["MINUS_COMMANDS"]:
+##################################################################################################################
+        if message.text in WORDS["MINUS_COMMANDS"]:
             if getPlayerName(message) in getPlayersList():
                 players_array = getPlayersList()
                 players_array.remove(getPlayerName(message))
