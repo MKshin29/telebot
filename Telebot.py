@@ -73,6 +73,8 @@ FILE_WITH_PLAYERS = 'playersList.txt'
 DUMP_FILE = 'dump.txt'
 TOKEN_FILE = 'token.txt'
 
+ADMINS = ['MKshin29', 'edreev', 'Slavichekepta']
+
 with open(TOKEN_FILE, 'r') as token_file:
     MY_TELEBOT = token_file.read()
 
@@ -81,9 +83,15 @@ HELP_DESCRIPTION = """
 Процесс формирования комманды: 
     1. Начинаем запись коммандой /start
     2. Записываемся с помощью слов '+', 'plus', 'плюс'
+       Что бы добавить человека со стороны пишем '+|plus|плюс <Игрок>' или '+|plus|плюс<Игрок>'
+       ВАЖНО!!! Таким образом нельзя записать в список участника текущей беседы. 
     3. Удаляем запись с помощью слов '-', 'minus', 'minus' (осторожно, он ругается)
-    3 с половиной. Если надо, проверяем текущий список игроков коммандой /status
-    4. Заканчиваем запись коммандой /stop
+       Что бы добавить человека со стороны пишем '-|minus|минус <Игрок>' или '-|minus|минус<Игрок>'
+       ВАЖНО!!! Таким образом нельзя удалить из списка участника текущей беседы. 
+    4. Если надо, проверяем текущий список игроков коммандой /status
+    5. Заканчиваем запись коммандой /stop
+    6. Для вызова истории наберите /hist. Запись в истории состоит из даты записи и списка всех записавшихся
+       Запись добавляется во время окончания записи на игру.
 """
 
 WORDS = {    "START_COMMANDS":  ['start']
@@ -116,15 +124,18 @@ def start_message(message):
 
 @bot.message_handler(commands=WORDS["STOP_COMMANDS"])
 def stop_message(message):
-    if rec.started:
-        if getPlayersList():
-            statusMessage = sayListWithNumbers(getPlayersList())
-            bot.reply_to(message, "Запись на игру закончена. Список записавшихся:\n{}".format(statusMessage))
-            dumpResults()
-        else: bot.reply_to(message, "Никто не записался на ближайшую игру :( ленивые человеки...")
-        rec.started = False
+    if message.from_user.username in ADMINS:
+        if rec.started:
+            if getPlayersList():
+                statusMessage = sayListWithNumbers(getPlayersList())
+                bot.reply_to(message, "Запись на игру закончена. Список записавшихся:\n{}".format(statusMessage))
+                dumpResults()
+            else: bot.reply_to(message, "Никто не записался на ближайшую игру :( ленивые человеки...")
+            rec.started = False
+        else:
+            bot.reply_to(message, "Запись ещё не началась. Для начала наберите комманду /start")
     else:
-        bot.reply_to(message, "Запись ещё не началась. Для начала наберите комманду /start")
+        bot.reply_to(message, "Эту комманду могут выполнять только администраторы группы!")
 
 @bot.message_handler(commands=WORDS["STATUS_COMMANDS"])
 def status_message(message):
