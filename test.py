@@ -1,4 +1,6 @@
-FILE_WITH_PLAYERS = 'test.txt'
+import re
+
+FILE_WITH_PLAYERS = 'playersList.txt'
 DUMP_FILE = 'dump.txt'
 
 class Game():
@@ -45,4 +47,18 @@ def getHist(lines: int = 5):
                 short_history.append(history[i])
             return short_history
 
-print(showHist(5))
+input = '- asd'
+phrase = re.match(r"((\-|minus|минус)((\s)|)(@\w+|\w+))$", input)
+
+if phrase:
+    playerName = '{} от {}'.format(phrase.group(5), '@MKshin29')
+    print(playerName)
+    if playerName not in getPlayersList():
+        players_array = getPlayersList()
+        print(players_array)
+        players_array.remove(playerName)
+        setPlayersList(players_array)
+    else: print('N')
+
+
+
